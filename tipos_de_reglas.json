@@ -1,0 +1,44 @@
+{
+  "com.datio.hammurabi.rules.availability.DateRangeFileRule": "1.1",
+  "com.datio.hammurabi.rules.availability.DateValidationRule": "1.2",
+
+  "com.datio.hammurabi.rules.completeness.CompletenessRule": "2.1",
+  "com.datio.hammurabi.rules.completeness.BasicPerimeterCompletenessRule": "2.2",
+  "com.datio.hammurabi.rules.completeness.BasicPerimeterVariationCompletenessRule": "2.2",
+  "com.datio.hammurabi.rules.completeness.ConditionalPerimeterCompletenessRule": "2.3",
+  "com.datio.hammurabi.rules.completeness.ConditionalPerimeterVariationCompletenessRule": "2.3",
+  "com.datio.hammurabi.rules.completeness.MetadataCompletenessRule": "2.4",
+
+  "com.datio.hammurabi.rules.validity.NotNullValidationRule": "3.1",
+  "com.datio.hammurabi.rules.validity.FormatValidationRule": "3.2",
+  "com.datio.hammurabi.rules.validity.StaticForbiddenValuesRule": "3.3",
+  "com.datio.hammurabi.rules.validity.DynamicForbiddenValuesRule": "3.3",
+  "com.datio.hammurabi.rules.validity.NumericRangeRule": "3.4",
+  "com.datio.hammurabi.rules.validity.StringRangeRule": "3.4",
+  "com.datio.hammurabi.rules.validity.DateRangeRule": "3.4",
+  "com.datio.hammurabi.rules.validity.StaticCatalogRule": "3,5",
+  "com.datio.hammurabi.rules.validity.DynamicCatalogRule": "3.5",
+
+  "com.datio.hammurabi.rules.consistence.DuplicateRule": "4.2",
+  "com.datio.hammurabi.rules.consistence.ValueConciliationRule": "4.3",
+
+  "com.datio.hammurabi.rules.integrity.ValueComparisonRule": "5.2",
+  "com.datio.hammurabi.rules.integrity.SameValueComparisonRule": "5.3",
+  "com.datio.hammurabi.rules.integrity.ConditionalExpressionObjectRule": "5.4",
+  "com.datio.hammurabi.rules.integrity.ConditionalExpressionObjectsRule": "5.5",
+  "com.datio.hammurabi.rules.integrity.ConditionalExpressionObjectsByRowRule": "5.5",
+  "com.datio.hammurabi.rules.integrity.ConcatRule": "5.6",
+  "com.datio.hammurabi.rules.integrity.ConcatRuleByColumn": "5.6",
+
+  "com.datio.hammurabi.rules.accuracy.StaticGatheringRule": "6.1",
+  "com.datio.hammurabi.rules.accuracy.DynamicGatheringRule": "6.1",
+  "com.datio.hammurabi.rules.accuracy.GatheringByRowRule": "6.1",
+  "com.datio.hammurabi.rules.accuracy.DynamicRatingVariationRule": "6.10",
+  "com.datio.hammurabi.rules.accuracy.StaticRatingVariationRule": "6.10",
+  "com.datio.hammurabi.rules.accuracy.HerfindahlRule": "6.11",
+  "com.datio.hammurabi.rules.accuracy.ValueSensitivityThresholdRule": "6.2",
+  "com.datio.hammurabi.rules.accuracy.ValueVariationRule": "6.4",
+  "com.datio.hammurabi.rules.accuracy.ValueAbsoluteVariationRule": "6.4",
+  "com.datio.hammurabi.rules.accuracy.VolumetricTrendRule": "6.9",
+  "com.datio.hammurabi.rules.TemporalRule": "None"
+}
