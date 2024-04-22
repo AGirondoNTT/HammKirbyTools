@@ -25,18 +25,29 @@ Conjunto de herramientas orientadas al trabajo con ficheros de configuración de
     - **output:** (capa, tabla output)
 
 - `reglas("ruta/al/repositorio")`: Devuelve un DataFrame con los datos a nivel de regla.
-    - **componente:** El nombre del componente al que pertenece la regla
-    - **id:** El ID de la regla.
-    - **tipo:** Número de regla.
-    - **clase:** Nombre de la clase de la regla.
-    - **campo aplicado:** Campo sobre el que se aplica.
-    - **isCritical:** Parámetro que indica si es crítica.
-    - **isTemporal:** Parámetro que indica si es una TemporalRule.
-    - **config regla:** JSON de todo el parámetro config de la regla, para posible uso futuro.
+    - **REPOSITORIO** El nombre del componente al que pertenece la regla
+	- **CONFIGURACION** Archivo de configuración de las reglas
+	- **CAPA** Capa donde se encuentra el ID Objeto. Por ejemplo: Staging/Raw/Master
+	- **ID OBJETO** Nombre de la tabla donde se aplican las reglas
+	- **ID FUNCIONAL** ID de la regla
+	- **PRINCIPIO DE CALIDAD** Regla principal. Regla 2,3,4,5,6
+	- **TIPO DE REGLA** Tipo de regla. 2.1,3.1...,6.9
+	- **CLASE** Nombre de la clase 
+	- **ID CAMPO** Campos donde se aplican las reglas 
+	- **REGLA BLOQUEANTE** Hace referencia al parámetro isCritical, indica si es crítica
+	- **PORCENTAJE MINIMO DE ACEPTACION** Hace referencia al parámetro acceptanceMin
+	- **TIPO DE MUESTRA DE RESULTADOS KOS** Hace referencia al parámetro withRefusals
+	- **3.1 - TRATAMIENTO DE VACIOS COMO NULOS** Hace referencia al parámetro treatEmptyValuesAsNulls
+	- **3.2 - FORMATO** Hace referencia al parámetro format 
+	- **4.2 - CAMPOS CLAVE DEL OBJETO** Hace referencia al parámetro columns
+	- **6.9 - CONDICION DE FILTRADO** Hace referencia al parámetro dataValuesSubset
+	- **6.9 - VARIACION MINIMA RELATIVA DE REGISTROS** Hace referencia al parámetro lowerBound
+	- **6.9 - VARIACION MAXIMA RELATIVA DE REGISTROS** Hace referencia al parámetro upperBound
 
-### ToDo
 
-- Hacer que sea posible introducir una carpeta con varios repositorios dentro y que analize todos de una.
+### Done
+
+- Se analiza todos los repositorios de la carpeta Test.
 
 ## Futuras Clases por Desarrollar
 
