@@ -2,7 +2,7 @@ import os
 import re
 import json
 import pyhocon
-from pyhocon import ConfigFactory, exceptions, HOCONConverter
+from pyhocon import ConfigFactory, exceptions
 from pyhocon.exceptions import ConfigMissingException
 import pandas as pd
 
@@ -10,26 +10,27 @@ import pandas as pd
 class LectorReglasRepo:
 
     def _limpiar_str(self, cadena):
-        return re.sub(r'[^a-zA-Z0-9_]', '', cadena)#Obtengo caracteres alfanumericos
+        #Obtengo caracteres alfanumericos
+        return re.sub(r'[^a-zA-Z0-9_]', '', cadena)
+    
     
     def _parsear_input_output(self, valor_input):
+        # Esta función es para los tipo de table, obtengo las capas de datos staging, raw, master
         #Pasar de [ConfigValues: [ConfigSubstitution: MASTERSCHEMA],[ConfigQuotedString: .t_krea_re_dev_deg_inspections]] -> master
-        #Obtengo  staging, raw, master 
         #capa = self._limpiar_str(valor_input.split(",")[0].split(":")[2]).lower()#[:-6]
         val_capa = self._limpiar_str(valor_input.split(",")[0].split(":")[2]).lower()#[:-6]
         
         if val_capa.find("staging")==0 or val_capa.find("raw")==0  or val_capa.find("master")==0:
             capa=val_capa[:-6]
-            #print(capa)
         else:
             capa=""
-            #print(capa)
         # Pasar de [ConfigValues: [ConfigSubstitution: MASTERSCHEMA],[ConfigQuotedString: .t_krea_re_dev_deg_inspections]] -> t_krea_re_dev_deg_inspections
         tabla = self._limpiar_str(valor_input.split(",")[1].split(":")[1])
-                
         return capa, tabla
     
+  
     def _obtener_version_jenkinsfile(self, ruta_archivo):
+        #Obtenemos la versión de los archivos jenkinsfiles
         with open(ruta_archivo, 'r') as archivo:
             contenido = archivo.read()
 
@@ -38,13 +39,13 @@ class LectorReglasRepo:
                 if 'env.VERSION' in linea:
                     partes = linea.split('=')
                     if len(partes) == 2:
-                        # Coger la parte derecha y quitar comillas
+                        # Tomar la parte derecha y quitar comillas
                         version = partes[1].strip().strip('"')
                         return version
 
-    def _obtener_archivos_conf(self,local_repo_path):#modificado
+    def _obtener_archivos_conf(self,local_repo_path):
+        #Creamos una variable lista confs
         confs = []
-
         for path, dirs, files in os.walk(local_repo_path):
             for filename in files:
                 if filename.endswith(".conf"):
@@ -63,18 +64,18 @@ class LectorReglasRepo:
                         return palabra_inicial
 
 
-    def _obtener_valor_input(self, ruta_archivo):#Modificado
+    def _obtener_valor_input(self, ruta_archivo):
                     
             config = ConfigFactory.parse_file(ruta_archivo, resolve=False)
-            tipo_conf = self._obtener_tipo_conf(ruta_archivo)#kirby,hammurabi,histable
-            #print(config)
+            #Obtengo los tipos de configuración kirby,hammurabi,histable
+            tipo_conf = self._obtener_tipo_conf(ruta_archivo)
             capa = ""
             tabla = ""
             if(tipo_conf=="kirby"):
                 tipo_input = config.get(tipo_conf).get("output").get("type")
-                #print(tipo_input)
+                
                 if (tipo_input == "parquet"):
-                    valor_input = config.get(tipo_conf).get("output").get("path")#[0]
+                    valor_input = config.get(tipo_conf).get("output").get("path")
                     valor_input_split = valor_input.split("/")
                     capa = valor_input_split[2]
                     var_uuaa=valor_input_split[3]
@@ -83,7 +84,7 @@ class LectorReglasRepo:
                         tabla = valor_input_split[-2]
                     else:
                         tabla = valor_input_split[-1]
-                    #print(valor_input,capa,tabla)
+                    
                     return tipo_conf,capa,tabla,var_uuaa
                 
                 elif (tipo_input == "table"):
@@ -92,7 +93,7 @@ class LectorReglasRepo:
                     var_uuaa_table1=resultado[1].split("_")
                     var_uuaa_table=var_uuaa_table1[1]
                     capa, tabla=resultado
-                    #print(var_uuaa_table)
+                    
                     return tipo_conf,capa,tabla,var_uuaa_table
                     
             if(tipo_conf=="hammurabi"):
@@ -106,7 +107,7 @@ class LectorReglasRepo:
                         tabla = valor_input_split[-2]
                     else:
                         tabla = valor_input_split[-1]
-                    #print(var_uuaa)
+                    
                     return tipo_conf,capa,tabla,var_uuaa
                 
                 elif (tipo_input == "table"):
@@ -115,7 +116,7 @@ class LectorReglasRepo:
                     var_uuaa_table1=resultado[1].split("_")
                     var_uuaa_table=var_uuaa_table1[1]
                     capa, tabla=resultado
-                    #print(var_uuaa_table)
+                    
                     return tipo_conf,capa,tabla,var_uuaa_table
 
             if(tipo_conf=="ConfigLog"):
@@ -129,24 +130,19 @@ class LectorReglasRepo:
                     tabla = valor_input_split[-1]
             else:
                 valor_input = "Type no contemplado"
-            #print(var_uuaa)
             return tipo_conf,capa,tabla,var_uuaa
 
    
-    def _leer_catalogo_reglas(self,ruta_archivo):#Revisar este codigo
+    def _leer_catalogo_reglas(self,ruta_archivo):
+        #Se lee el archivo tipos de regla
         with open(ruta_archivo, 'r') as archivo:
             catalogo = json.load(archivo)
-            #print(ruta_archivo)#,catalogo)
+            
         return catalogo
 
-    def _is_critical(self, ruta_conf, regla):
-        try:
-            return regla.get("config").get("isCritical")
-        except exceptions.ConfigMissingException:
-            print(f"\nNo se indica isCritical en {ruta_conf} > id = {regla.get("config").get("id")}\n")
-            return True
-    
-    def _obtener_campo_aplicado(self, ruta_conf, regla):#Modificado
+   
+    def _obtener_campo_aplicado(self, ruta_conf, regla):
+        #Se creo una variable lista
         columnas=[]
         try:
             columnas=regla.get("config").get("column")
@@ -159,21 +155,23 @@ class LectorReglasRepo:
             except exceptions.ConfigMissingException:
                 return columnas
 
-    
-    def _componentes(self, local_repo_path,ruta_file,file_name_componentes):#Modificado
+    def _componentes(self, local_repo_path,ruta_file,file_name_componentes):
         
         datos_repos = []
         archivo_repo=os.listdir(local_repo_path)
         
         for repositorios in archivo_repo:
-            nombre_repos=os.path.basename(repositorios)#Obtengo el nombre de los repositorios
+            #Obtengo el nombre de los repositorios
+            nombre_repos=os.path.basename(repositorios)
             var_rutacompleta=os.path.join(local_repo_path,repositorios)
             ruta_modi2=var_rutacompleta.replace("\\", "/")
             rutas_confs=self._obtener_archivos_conf(ruta_modi2)
-            archivos_jenk=os.listdir(ruta_modi2)#Obtengo los archivos jenkins
+            #Obtengo los archivos jenkins
+            archivos_jenk=os.listdir(ruta_modi2)
 
             #Se crea inicialmente un diccionario por las diferentes longitudes de los repos
-            dato_repo={'nombre repo':nombre_repos} #En este diccionario obtengo nom y ver
+            #En este diccionario obtengo nom y ver
+            dato_repo={'nombre repo':nombre_repos} 
             
             #creamos las listas
             confs =   []
@@ -223,273 +221,139 @@ class LectorReglasRepo:
         var_ruta=os.path.join(ruta_file,file_name_componentes)
         var_rutacompleta=var_ruta.replace("\\", "/")
         df.to_csv(var_rutacompleta, index=False)
-
         return df
-        
-    #Función toma como input el df generado por el pivot y nombre del archivo csv    
-    def _FormatoDF(self,df_pivottable,ruta_file,file_name):
+    
+    #Obtener la lista de repositorio, ruta de los archivos de configuración,
+    #nombre del archivo de configuración, nombre de la capa (Master, Staging,etc)
+    #nombre de la tabla
+    def _lista_repositorio(self, local_repo_path):
+        datos_repositorio=[]
+        listar_repo=os.listdir(local_repo_path)
+        for repositorios in listar_repo:
+            nom_repositorios=repositorios
+            rut_completa_repo=os.path.join(local_repo_path,nom_repositorios).replace("\\","/")
+            rut_archivos_confs=self._obtener_archivos_conf(rut_completa_repo)
+            for archivos_confs in rut_archivos_confs:
+                rut_archivos_conf_mod=archivos_confs.replace("\\", "/").strip()
+                nom_archivos_conf=os.path.basename(rut_archivos_conf_mod)
+                tipo, capa, tabla,uuaa = self._obtener_valor_input(rut_archivos_conf_mod)
+                #En este caso para obtener las configuraciones de las reglas 
+                #obtengo el tipo de configuración Hammurabi
+                tipo_configuracion=self._obtener_tipo_conf(rut_archivos_conf_mod)
+                
+                if tipo_configuracion=="hammurabi":
+                    #datos del dataframe
+                    datos={
+                            'REPOSITORIO':nom_repositorios,
+                            'RUTA':rut_archivos_conf_mod,
+                            'HAMMURABI':tipo_configuracion,
+                            'NOMBRE DE ARCHIVO':nom_archivos_conf,
+                            'CAPA':capa,
+                            'ID OBJETO':tabla,
+                    }
+                    datos_repositorio.append(datos)
+            
+            dataframe = pd.DataFrame(datos_repositorio)
+            
+        return dataframe
 
-        df_reglas = df_pivottable
-                    
-        #considerar las reglas 3.1, 3.2,4.2,6.9
-        #renombramos las columnas
-        df_reglas.rename(columns={'Repositorio':'REPOSITORIO','Componente':'CONFIGURACION','Capa':'CAPA','Tabla':'ID OBJETO',
-                                          'Id Funcional':'ID FUNCIONAL','Principio de Calidad':'PRINCIPIO DE CALIDAD',
-                                          'Tipo de regla':'TIPO DE REGLA','clase':'CLASE','campo aplicado':'ID CAMPO',
-                                          'isCritical':'REGLA BLOQUEANTE','acceptanceMin':'PORCENTAJE MINIMO DE ACEPTACION',
-                                          'withRefusals':'TIPO DE MUESTRA DE RESULTADOS KOS','treatEmptyValuesAsNulls 3.1':
-                                          '3.1 - TRATAMIENTO DE VACIOS COMO NULOS','formato 3.2':'3.2 - FORMATO',
-                                          'columns 4.2': '4.2 - CAMPOS CLAVE DEL OBJETO','dataValuesSubset 6.9': 
-                                          '6.9 - CONDICION DE FILTRADO','lowerBound 6.9':'6.9 - VARIACION MINIMA RELATIVA DE REGISTROS',
-                                          'upperBound 6.9':'6.9 - VARIACION MAXIMA RELATIVA DE REGISTROS',},inplace=True) 
+    #Obtengo el dataframe creado en la función anterior
+    def _configuracion_reglas(self,local_repo_path,ruta_reglas,file_name_tiporeglas,ruta_file_output,file_name_reglas):
         
-        #Listar las columnas a mostrar
-        column_order=['REPOSITORIO','CONFIGURACION','CAPA','ID OBJETO','ID FUNCIONAL','PRINCIPIO DE CALIDAD',
-                      'TIPO DE REGLA','CLASE','ID CAMPO','REGLA BLOQUEANTE','PORCENTAJE MINIMO DE ACEPTACION',
-                      'TIPO DE MUESTRA DE RESULTADOS KOS','3.1 - TRATAMIENTO DE VACIOS COMO NULOS','3.2 - FORMATO',
-                      '4.2 - CAMPOS CLAVE DEL OBJETO','6.9 - CONDICION DE FILTRADO','6.9 - VARIACION MINIMA RELATIVA DE REGISTROS',
-                      '6.9 - VARIACION MAXIMA RELATIVA DE REGISTROS']
-        #Ordenar las columnas
-        df_reglas_ultimo = df_reglas.reindex(columns=column_order)
-        
+        datos_conf_reglas=[]
+        df1=self._lista_repositorio(local_repo_path)
+        #Obtengo la ruta del archivo de configuración desde el df1
+        ruta_file_conf=df1['RUTA']
+        #print(tipo_configuracion)
+        for files_configuraciones in ruta_file_conf:
+           config = ConfigFactory.parse_file(files_configuraciones, resolve=False)
+           #Obtenemos información acerca de las reglas
+           config_reglas = config.get("hammurabi").get("rules")
+           #Realizamos un for para recorrer todas las reglas
+           for reglas in config_reglas:
+               #Obtengo la clase
+               clase = reglas.get("class")
+               #Obtener los tipos y subtipos de reglas
+               ruta_rule=os.path.join(ruta_reglas,file_name_tiporeglas).replace("\\", "/").strip()
+               catalogo_reglas = self._leer_catalogo_reglas(ruta_rule)
+               sub_tipo=catalogo_reglas[clase].replace(',','.')
+               tipo=sub_tipo[0]
+               
+               #Obtengo Id de la regla MVP o Dominio
+               id_reglas=reglas.get("config").get("id")
+               #Obtengo el campo columns
+               id_columns=self._obtener_campo_aplicado(files_configuraciones, reglas)
+               #Obtengo el campo critical
+               var_critical=reglas.get("config").get("isCritical", "")
+               #Obtengo el campo acceptanceMin
+               var_acceptanceMin = reglas.get("config").get("acceptanceMin", "")
+               #Obtengo el campo withRefusals
+               var_withRefusals= reglas.get("config").get("withRefusals", "")
+               #Obtengo el campo treatEmptyValuesAsNulls
+               var_treatEmptyValuesAsNulls=reglas.get("config").get("treatEmptyValuesAsNulls", "")
+               #Obtengo el campo format
+               var_format=reglas.get("config").get("format", "")
+               #Obtengo el campo columns
+               var_columns=reglas.get("config").get("columns", "")
+               #Obtengo el campo lowerBound
+               var_lowerBound=reglas.get("config").get("lowerBound", "")
+               #Obtengo el campo upperBound
+               var_upperBound=reglas.get("config").get("upperBound", "")
+               #Obtengo el campo dataValuesSubset
+               var_dataValuesSubset=reglas.get("config").get("dataValuesSubset", "")
+
+               #datos del dataframe
+               datos_reglas={
+                    'RUTA':files_configuraciones,
+                    'CLASE':clase,
+                    'PRINCIPIO DE CALIDAD':tipo,
+                    'TIPO DE REGLA':sub_tipo,
+                    'ID FUNCIONAL':id_reglas,
+                    'ID CAMPO':id_columns,
+                    'REGLA BLOQUEANTE':var_critical,
+                    'PORCENTAJE MINIMO DE ACEPTACION':var_acceptanceMin,
+                    'TIPO DE MUESTRA DE RESULTADOS KOS':var_withRefusals,
+                    'TRATAMIENTO DE VACIOS COMO NULOS':var_treatEmptyValuesAsNulls,
+                    'FORMATO':var_format,
+                    'CAMPOS CLAVE DEL OBJETO':var_columns,
+                    'VARIACION MINIMA RELATIVA DE REGISTROS':var_lowerBound,
+                    'VARIACION MAXIMA RELATIVA DE REGISTROS':var_upperBound,
+                    'CONDICION DE FILTRADO':var_dataValuesSubset
+                }
+               datos_conf_reglas.append(datos_reglas)
+        df2 = pd.DataFrame(datos_conf_reglas)
+
+        #Realizar merge a los DataFrames
+        merged_df = pd.merge(df1, df2, on='RUTA', how='inner')
         #ruta file y name file
-        var_ruta=os.path.join(ruta_file,file_name)
+        var_ruta=os.path.join(ruta_file_output,file_name_reglas)
         var_rutacompleta=var_ruta.replace("\\", "/")
-        df_reglas_ultimo.to_csv(var_rutacompleta, index=False)
+        #Exportar el df a un archivo csv
+        merged_df.to_csv(var_rutacompleta, index=False) 
+       
 
+            
+
+
+
+
+
+
+           
+
+       
+           
+
+        
      
 
-    def _reglas(self, local_repo_path,ruta_file,file_name):
-       datos_reglas1 = []
-       datos_reglas2 = []
-       archivo_repo=os.listdir(local_repo_path)
+   
+
+
+
         
-       for repositorios in archivo_repo:
-            nombre_repos=os.path.basename(repositorios)#Obtengo el nombre de los repositorios
-            var_rutacompleta=os.path.join(local_repo_path,repositorios)
-            ruta_modi2=var_rutacompleta.replace("\\", "/")
-            rutas_confs=self._obtener_archivos_conf(ruta_modi2)
-            archivos_jenk=os.listdir(ruta_modi2)#Obtengo los archivos jenkins
 
-            #Se crea inicialmente un diccionario por las diferentes longitudes de los repos
-            dato_repo={'nombre repo':nombre_repos} #En este diccionario obtengo nom y ver
-
-            for conf in rutas_confs:
-                vconf_ruta_mod=conf.replace("\\", "/").strip()
-                confs=os.path.basename(vconf_ruta_mod)
-                catalogo_reglas = self._leer_catalogo_reglas("./tipos_de_reglas.json")
-                #print(catalogo_reglas)
-                #confs.append(os.path.basename(vconf_ruta_mod))
-                
-                tipo_conf = self._obtener_tipo_conf(vconf_ruta_mod)#kirby,hammurabi,histable
-                #print(tipo_conf)
-                if (tipo_conf=="hammurabi"):
-                    config = ConfigFactory.parse_file(vconf_ruta_mod, resolve=False)
-                    #table=
-                    tipo_input_2, capa_input, tabla_input,uuaa_input = self._obtener_valor_input(vconf_ruta_mod)
-                    #print(tipo_input_2, capa_input, tabla_input,uuaa_input)
-                    tipo_input = config.get(tipo_conf).get("rules")
-                    reglas = config.get(tipo_conf).get("rules")
-                    for regla in reglas:
-                        clase = regla.get("class")
-                        
-                        if clase.endswith("TemporalRule"):
-                            temporals="Temporal"
-                            clase = regla.get("config").get("parentClass")
-                        else:
-                            temporals=""
-                        
-                        #Formato de campos    
-                        var_format=regla.get("config")                        
-                        # Verificar si la clave "format" está presente en la configuración
-                        if "format" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_formato = var_format.get("format")
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_formato = ""
-                                                                    
-                        clases=clase
-                        tipos=catalogo_reglas[clase].replace(',','.')
-                        pcalidad=tipos[0]
-                        ids=regla.get("config").get("id")
-                        columnas=self._obtener_campo_aplicado(conf, regla)
-                        criticals=self._is_critical(conf, regla)
-                         
-                        #Primary Key 
-                        # Verificar si la clave "format" está presente en la configuración
-                        if "keyColumns" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_pk = var_format.get("keyColumns")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_pk = ""
-                        
-                        #acceptanceMin
-                        # Verificar si la clave "format" está presente en la configuración
-                        if "acceptanceMin" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_accmin = var_format.get("acceptanceMin")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_accmin = ""
-                        
-                        #withRefusals
-                        # Verificar si la clave "format" está presente en la configuración
-                        if "withRefusals" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_withre = var_format.get("withRefusals")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_withre = ""
-
-                        #columns, identifica la regla 4.2
-                        if "columns" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_rule_42 = var_format.get("columns")
-                        
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_rule_42 = ""
-
-                        #treatEmptyValuesAsNulls regla 3.1
-                        # Verificar si la clave "format" está presente en la configuración
-                        if "treatEmptyValuesAsNulls" in var_format:
-                            # Si está , obtener su valor
-                            var_treatEmptyValuesAsNulls = var_format.get("treatEmptyValuesAsNulls")
-                            
-                        else:
-                            # Si no está , mostrar el valor de default
-                            var_treatEmptyValuesAsNulls = ""
-
-                        #values
-                        # Verificar si la clave "values" está presente en la configuración
-                        if "values" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_values = var_format.get("values")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_values = ""
-                        
-                        #subset
-                        # Verificar si la clave "format" está presente en la configuración
-                        if "subset" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_subset = var_format.get("subset")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_subset = ""
-                        
-                        #dataValuesSubset
-                        # Verificar si la clave "format" está presente en la configuración
-                        if "dataValuesSubset" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_dataValuesSubset = var_format.get("dataValuesSubset")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_dataValuesSubset = ""
-                        
-                        #condition
-                        # Verificar si la clave "format" está presente en la configuración
-                        if "condition" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_condition = var_format.get("condition")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_condition = ""
-                        
-                        #rule 6.9 - lowerBound
-                        if "lowerBound" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_lowerBound = var_format.get("lowerBound")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_lowerBound = ""
-                        
-                        #rule 6.9 - upperBound
-                        if "upperBound" in var_format:
-                            # Si está presente, obtener su valor
-                            valor_upperBound = var_format.get("upperBound")
-                            
-                        else:
-                            # Si no está presente, mostrar nulo
-                            valor_upperBound = ""
-                         
-                                                   
-                        
-                        dato1={
-                            'Repositorio':nombre_repos,
-                            'Componente':confs,
-                            'Capa':capa_input,
-                            'Tabla':tabla_input,
-                            'Id Funcional':ids,
-                            'Principio de Calidad':pcalidad,
-                            'Tipo de regla':tipos,
-                            'clase':clases,
-                            'campo aplicado':columnas,
-                            'isCritical':criticals,
-                            'acceptanceMin':valor_accmin,
-                            'withRefusals':valor_withre,
-                            'treatEmptyValuesAsNulls':var_treatEmptyValuesAsNulls,
-                            'formato':valor_formato,
-                            'columns':valor_rule_42,
-                            'lowerBound':valor_lowerBound,
-                            'upperBound':valor_upperBound,
-                            'dataValuesSubset':valor_dataValuesSubset
-                            #'key column':valor_pk,                            
-                            #'values':valor_values,                            
-                            #'isTemporal':temporals,
-                            #'subset':valor_subset,                            
-                            #'condition':valor_condition                                  
-                        }
-
-                                              
-                        #primeros campos. No se va pivotear
-                        datos_reglas1.append(dato1)
-
-                         #Creamos un dataframe a partir de la recopilación de los datos de los repositorios
-       if datos_reglas1:
-                df1 = pd.DataFrame(datos_reglas1)
-                #DF casteado
-                df1['acceptanceMin'] = df1['acceptanceMin'].astype(str)
-                df1['campo aplicado']=df1['campo aplicado'].astype(str)
-                
-                for index, value in df1['treatEmptyValuesAsNulls'].items():
-                    if pd.isna(value) or value == '':
-                        df1.at[index, 'treatEmptyValuesAsNulls'] = "True"
-
-                #Realizamos pivot table
-                pivoted_df = df1.pivot_table(index=['Repositorio', 'Componente', 'Capa', 'Tabla', 'Id Funcional', 'Principio de Calidad', 'Tipo de regla','clase','campo aplicado','isCritical','acceptanceMin','withRefusals'],
-                                                columns='Tipo de regla',
-                                                #values=['key column','values','treatEmptyValuesAsNulls','formato','columns','isTemporal', 'subset','dataValuesSubset','condition','lowerBound','upperBound'],
-                                                values=['treatEmptyValuesAsNulls','formato','columns','lowerBound','upperBound','dataValuesSubset'],
-                                                aggfunc='first')
-                
-                
-                # Reorganizar las columnas 
-                pivoted_df.columns = [' '.join(col).strip() for col in pivoted_df.columns.values]
-                pivoted_df.reset_index(inplace=True)
-
-                #Realizamos merge de las columnas fijas con las columnas desagregadas
-                merged_df = pd.merge(df1[['Repositorio', 'Componente', 'Capa', 'Tabla', 'Id Funcional', 'Principio de Calidad', 'Tipo de regla','clase','campo aplicado','isCritical','acceptanceMin','withRefusals']],
-                     pivoted_df,
-                     on=['Repositorio', 'Componente', 'Capa', 'Tabla', 'Id Funcional', 'Principio de Calidad', 'Tipo de regla','clase','campo aplicado','isCritical','acceptanceMin','withRefusals'],
-                     how='outer', indicator=True)
-                
-                #Función _FormatoDF, toma como input el df pivoteado, 
-                #luego tomar las columnas que se necesita y renombrar
-                
-                self._FormatoDF(merged_df,ruta_file,file_name)
-                 
-                return merged_df
+            
         
       
     
