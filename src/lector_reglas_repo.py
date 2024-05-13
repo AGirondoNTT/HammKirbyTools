@@ -155,7 +155,7 @@ class LectorReglasRepo:
             except exceptions.ConfigMissingException:
                 return columnas
 
-    def _componentes(self, local_repo_path,ruta_file,file_name_componentes):
+    def _componentes(self, local_repo_path):
         
         datos_repos = []
         archivo_repo=os.listdir(local_repo_path)
@@ -212,16 +212,10 @@ class LectorReglasRepo:
             #Agregar todos los datos a la lista
             datos_repos.append(dato_repo)
         
-        #Luego de obtener los datos en las listas de cada campo
         #Creamos un dataframe a partir de la recopilación de los datos de los repositorios
-        
-        df = pd.concat([pd.DataFrame(datos) for datos in datos_repos], ignore_index=True)
-        
-        #ruta file y name file
-        var_ruta=os.path.join(ruta_file,file_name_componentes)
-        var_rutacompleta=var_ruta.replace("\\", "/")
-        df.to_csv(var_rutacompleta, index=False)
-        return df
+        dataframe_componentes = pd.concat([pd.DataFrame(datos) for datos in datos_repos], ignore_index=True)
+        #print(dataframe_componentes)   
+        return dataframe_componentes
     
     #Obtener la lista de repositorio, ruta de los archivos de configuración,
     #nombre del archivo de configuración, nombre de la capa (Master, Staging,etc)
@@ -258,7 +252,8 @@ class LectorReglasRepo:
         return dataframe
 
     #Obtengo el dataframe creado en la función anterior
-    def _configuracion_reglas(self,local_repo_path,ruta_reglas,file_name_tiporeglas,ruta_file_output,file_name_reglas):
+    #para complementarlo con información de las reglas
+    def _configuracion_reglas(self,local_repo_path):
         
         datos_conf_reglas=[]
         df1=self._lista_repositorio(local_repo_path)
@@ -274,8 +269,8 @@ class LectorReglasRepo:
                #Obtengo la clase
                clase = reglas.get("class")
                #Obtener los tipos y subtipos de reglas
-               ruta_rule=os.path.join(ruta_reglas,file_name_tiporeglas).replace("\\", "/").strip()
-               catalogo_reglas = self._leer_catalogo_reglas(ruta_rule)
+               #ruta_rule=os.path.join(ruta_reglas,file_name_tiporeglas).replace("\\", "/").strip()
+               catalogo_reglas = self._leer_catalogo_reglas("./tipos_de_reglas.json")
                sub_tipo=catalogo_reglas[clase].replace(',','.')
                tipo=sub_tipo[0]
                
@@ -324,12 +319,10 @@ class LectorReglasRepo:
         df2 = pd.DataFrame(datos_conf_reglas)
 
         #Realizar merge a los DataFrames
-        merged_df = pd.merge(df1, df2, on='RUTA', how='inner')
-        #ruta file y name file
-        var_ruta=os.path.join(ruta_file_output,file_name_reglas)
-        var_rutacompleta=var_ruta.replace("\\", "/")
-        #Exportar el df a un archivo csv
-        merged_df.to_csv(var_rutacompleta, index=False) 
+        dataframe_reglas = pd.merge(df1, df2, on='RUTA', how='inner')
+        #print(dataframe_reglas)
+        return dataframe_reglas
+       
        
 
             
